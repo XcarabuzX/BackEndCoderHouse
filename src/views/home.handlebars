@@ -1,0 +1,40 @@
+<h1>Lista de Productos</h1>
+
+{{#if error}}
+  <p style="color: red;">Error: {{error}}</p>
+{{/if}}
+
+{{#if products.length}}
+  <table style="width:100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <thead style="background: #2c3e50; color: white;">
+      <tr>
+        <th style="padding: 12px 16px; text-align: left;">ID</th>
+        <th style="padding: 12px 16px; text-align: left;">Título</th>
+        <th style="padding: 12px 16px; text-align: left;">Categoría</th>
+        <th style="padding: 12px 16px; text-align: right;">Precio</th>
+        <th style="padding: 12px 16px; text-align: right;">Stock</th>
+        <th style="padding: 12px 16px; text-align: center;">Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each products}}
+      <tr style="border-bottom: 1px solid #eee;">
+        <td style="padding: 10px 16px;">{{this.id}}</td>
+        <td style="padding: 10px 16px;">{{this.title}}</td>
+        <td style="padding: 10px 16px;">{{this.category}}</td>
+        <td style="padding: 10px 16px; text-align: right;">${{this.price}}</td>
+        <td style="padding: 10px 16px; text-align: right;">{{this.stock}}</td>
+        <td style="padding: 10px 16px; text-align: center;">
+          {{#if this.status}}
+            <span style="color: green;">✓ Activo</span>
+          {{else}}
+            <span style="color: red;">✗ Inactivo</span>
+          {{/if}}
+        </td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+{{else}}
+  <p style="color: #666; margin-top: 20px;">No hay productos disponibles.</p>
+{{/if}}
