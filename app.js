@@ -8,6 +8,7 @@ import productsRouter from './src/routes/products.router.js';
 import cartsRouter from './src/routes/carts.router.js';
 import viewsRouter from './src/routes/views.router.js';
 import { ProductManager } from './src/managers/ProductManager.js';
+import { connectDB } from './src/config/mongoose.config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,7 +20,11 @@ const productManager = new ProductManager();
 const PORT = 8080;
 
 // Motor de plantillas Handlebars
-app.engine('handlebars', engine());
+app.engine('handlebars', engine({
+  helpers: {
+    multiply: (a, b) => (a * b).toFixed(2)
+  }
+}));
 app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'src/views'));
 
@@ -51,8 +56,8 @@ io.on('connection', (socket) => {
   socket.on('newProduct', async (data) => {
     try {
       await productManager.addProduct(data);
-      const products = await productManager.getProducts();
-      io.emit('updateProducts', products);
+      const result = await productManager.getProducts();
+      io.emit('updateProducts', result.payload);
     } catch (error) {
       socket.emit('productError', { message: error.message });
     }
@@ -60,9 +65,9 @@ io.on('connection', (socket) => {
 
   socket.on('deleteProduct', async (id) => {
     try {
-      await productManager.deleteProduct(Number(id));
-      const products = await productManager.getProducts();
-      io.emit('updateProducts', products);
+      await productManager.deleteProduct(id);
+      const result = await productManager.getProducts();
+      io.emit('updateProducts', result.payload);
     } catch (error) {
       socket.emit('productError', { message: error.message });
     }
@@ -72,6 +77,8 @@ io.on('connection', (socket) => {
     console.log('Cliente desconectado:', socket.id);
   });
 });
+
+await connectDB();
 
 httpServer.listen(PORT, () => {
   console.log(`Servidor escuchando en http://localhost:${PORT}`);

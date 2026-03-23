@@ -12,12 +12,12 @@
         <div class="product-card" style="background: white; border-radius: 8px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
-              <strong>{{this.title}}</strong> <span style="color: #999; font-size: 0.85em;">#{{this.id}}</span>
+              <strong>{{this.title}}</strong> <span style="color: #999; font-size: 0.85em;">#{{this._id}}</span>
               <p style="color: #555; font-size: 0.9em; margin-top: 4px;">{{this.category}} — ${{this.price}}</p>
               <p style="color: #777; font-size: 0.85em;">Stock: {{this.stock}}</p>
             </div>
             <button
-              onclick="deleteProduct({{this.id}})"
+              onclick="deleteProduct('{{this._id}}')"
               style="background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em;">
               Eliminar
             </button>
@@ -85,12 +85,12 @@
       <div class="product-card" style="background: white; border-radius: 8px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
           <div>
-            <strong>${p.title}</strong> <span style="color: #999; font-size: 0.85em;">#${p.id}</span>
+            <strong>${p.title}</strong> <span style="color: #999; font-size: 0.85em;">#${p._id}</span>
             <p style="color: #555; font-size: 0.9em; margin-top: 4px;">${p.category} — $${p.price}</p>
             <p style="color: #777; font-size: 0.85em;">Stock: ${p.stock}</p>
           </div>
           <button
-            onclick="deleteProduct(${p.id})"
+            onclick="deleteProduct('${p._id}')"
             style="background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em;">
             Eliminar
           </button>

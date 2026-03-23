@@ -1,0 +1,81 @@
+<div class="container">
+  {{#if error}}
+    <h1>Error</h1>
+    <p class="error">{{error}}</p>
+    <a href="/products">← Volver a productos</a>
+  {{else}}
+    <h1>Carrito</h1>
+    <p class="cart-id">ID: <code>{{cart._id}}</code></p>
+
+    {{#if cart.products.length}}
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Precio unitario</th>
+            <th>Cantidad</th>
+            <th>Subtotal</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each cart.products}}
+          <tr>
+            <td>{{this.product.title}}</td>
+            <td>${{this.product.price}}</td>
+            <td>{{this.quantity}}</td>
+            <td>${{multiply this.product.price this.quantity}}</td>
+            <td>
+              <button onclick="removeProduct('{{this.product._id}}')">Eliminar</button>
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+
+      <div class="actions">
+        <button class="danger" onclick="clearCart()">Vaciar carrito</button>
+      </div>
+    {{else}}
+      <p>El carrito está vacío.</p>
+    {{/if}}
+
+    <a href="/products">← Seguir comprando</a>
+  {{/if}}
+</div>
+
+<style>
+  .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+  .cart-id { color: #666; margin-bottom: 1.5rem; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 0.6rem 1rem; border: 1px solid #ddd; text-align: left; }
+  th { background-color: #f4f4f4; }
+  tr:hover { background-color: #f9f9f9; }
+  button { padding: 0.4rem 0.8rem; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer; }
+  button:hover { background: #555; }
+  button.danger { background: #c00; }
+  button.danger:hover { background: #e00; }
+  .actions { margin-top: 1rem; }
+  .error { color: red; }
+  a { color: #333; }
+</style>
+
+<script>
+  const cartId = '{{cart._id}}';
+
+  async function removeProduct(productId) {
+    if (!confirm('¿Eliminar este producto del carrito?')) return;
+    const res = await fetch(`/api/carts/${cartId}/products/${productId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.status === 'success') location.reload();
+    else alert('Error: ' + data.message);
+  }
+
+  async function clearCart() {
+    if (!confirm('¿Vaciar todo el carrito?')) return;
+    const res = await fetch(`/api/carts/${cartId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.status === 'success') location.reload();
+    else alert('Error: ' + data.message);
+  }
+</script>

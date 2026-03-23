@@ -1,64 +1,81 @@
-import fs from 'fs/promises';
-import path from 'path';
+import mongoose from 'mongoose';
+import { CartModel } from '../models/Cart.model.js';
 
 export class CartManager {
-  constructor() {
-    this.path = path.join(process.cwd(), 'data', 'carts.json');
-  }
-
-  async #readFile() {
-    try {
-      const data = await fs.readFile(this.path, 'utf-8');
-      return JSON.parse(data);
-    } catch (error) {
-      if (error.code === 'ENOENT') return [];
-      throw error;
-    }
-  }
-
-  async #writeFile(data) {
-    await fs.writeFile(this.path, JSON.stringify(data, null, 2), 'utf-8');
-  }
 
   async createCart() {
-    const carts = await this.#readFile();
-    const newId = carts.length > 0 ? Math.max(...carts.map((c) => c.id)) + 1 : 1;
-
-    const newCart = {
-      id: newId,
-      products: [],
-    };
-
-    carts.push(newCart);
-    await this.#writeFile(carts);
-    return newCart;
+    const newCart = new CartModel({ products: [] });
+    return await newCart.save();
   }
 
-  async getCartById(id) {
-    const carts = await this.#readFile();
-    const cart = carts.find((c) => c.id === id);
-    if (!cart) throw new Error(`Carrito con id ${id} no encontrado`);
+  async getCartById(cid) {
+    if (!mongoose.Types.ObjectId.isValid(cid)) throw new Error(`ID inválido: ${cid}`);
+    const cart = await CartModel.findById(cid).populate('products.product');
+    if (!cart) throw new Error(`Carrito con id ${cid} no encontrado`);
     return cart;
   }
 
   async addProductToCart(cartId, productId) {
-    const carts = await this.#readFile();
-    const cartIndex = carts.findIndex((c) => c.id === cartId);
+    if (!mongoose.Types.ObjectId.isValid(cartId)) throw new Error(`ID de carrito inválido: ${cartId}`);
+    if (!mongoose.Types.ObjectId.isValid(productId)) throw new Error(`ID de producto inválido: ${productId}`);
 
-    if (cartIndex === -1) throw new Error(`Carrito con id ${cartId} no encontrado`);
+    const cart = await CartModel.findById(cartId);
+    if (!cart) throw new Error(`Carrito con id ${cartId} no encontrado`);
 
-    const cart = carts[cartIndex];
-    const productIndex = cart.products.findIndex((p) => p.product === productId);
+    const existingItem = cart.products.find(
+      item => item.product.toString() === productId.toString()
+    );
 
-    if (productIndex !== -1) {
-      // Producto ya existe en el carrito, incrementar quantity
-      cart.products[productIndex].quantity += 1;
+    if (existingItem) {
+      await CartModel.findOneAndUpdate(
+        { _id: cartId, 'products.product': productId },
+        { $inc: { 'products.$.quantity': 1 } }
+      );
     } else {
-      // Producto nuevo, agregar con quantity 1
-      cart.products.push({ product: productId, quantity: 1 });
+      await CartModel.findByIdAndUpdate(
+        cartId,
+        { $push: { products: { product: productId, quantity: 1 } } }
+      );
     }
 
-    await this.#writeFile(carts);
+    return await CartModel.findById(cartId).populate('products.product');
+  }
+
+  async removeProductFromCart(cid, pid) {
+    if (!mongoose.Types.ObjectId.isValid(cid)) throw new Error(`ID de carrito inválido: ${cid}`);
+    if (!mongoose.Types.ObjectId.isValid(pid)) throw new Error(`ID de producto inválido: ${pid}`);
+    const cart = await CartModel.findByIdAndUpdate(
+      cid,
+      { $pull: { products: { product: pid } } },
+      { new: true }
+    ).populate('products.product');
+    if (!cart) throw new Error(`Carrito con id ${cid} no encontrado`);
+    return cart;
+  }
+
+  async updateCart(cid, products) {
+    if (!mongoose.Types.ObjectId.isValid(cid)) throw new Error(`ID inválido: ${cid}`);
+    const cart = await CartModel.findByIdAndUpdate(cid, { products }, { new: true }).populate('products.product');
+    if (!cart) throw new Error(`Carrito con id ${cid} no encontrado`);
+    return cart;
+  }
+
+  async updateProductQuantity(cid, pid, quantity) {
+    if (!mongoose.Types.ObjectId.isValid(cid)) throw new Error(`ID de carrito inválido: ${cid}`);
+    if (!mongoose.Types.ObjectId.isValid(pid)) throw new Error(`ID de producto inválido: ${pid}`);
+    const cart = await CartModel.findOneAndUpdate(
+      { _id: cid, 'products.product': pid },
+      { $set: { 'products.$.quantity': quantity } },
+      { new: true }
+    ).populate('products.product');
+    if (!cart) throw new Error(`Carrito o producto no encontrado`);
+    return cart;
+  }
+
+  async clearCart(cid) {
+    if (!mongoose.Types.ObjectId.isValid(cid)) throw new Error(`ID inválido: ${cid}`);
+    const cart = await CartModel.findByIdAndUpdate(cid, { products: [] }, { new: true });
+    if (!cart) throw new Error(`Carrito con id ${cid} no encontrado`);
     return cart;
   }
 }
