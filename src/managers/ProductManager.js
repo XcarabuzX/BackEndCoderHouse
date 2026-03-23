@@ -16,7 +16,7 @@ export class ProductManager {
     const sortObj = sort === 'asc' ? { price: 1 } : sort === 'desc' ? { price: -1 } : {};
 
     const [products, totalDocs] = await Promise.all([
-      ProductModel.find(filter).limit(limit).skip((page - 1) * limit).sort(sortObj),
+      ProductModel.find(filter).limit(limit).skip((page - 1) * limit).sort(sortObj).lean(),
       ProductModel.countDocuments(filter)
     ]);
 
