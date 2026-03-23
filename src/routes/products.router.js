@@ -4,11 +4,17 @@ import { ProductManager } from '../managers/ProductManager.js';
 const router = Router();
 const productManager = new ProductManager();
 
-// GET /api/products - Listar todos los productos
+// GET /api/products - Listar productos con paginación, filtros y ordenamiento
 router.get('/', async (req, res) => {
   try {
-    const products = await productManager.getProducts();
-    res.json({ status: 'success', data: products });
+    const { limit = 10, page = 1, sort, query } = req.query;
+    const result = await productManager.getProducts({
+      limit: Number(limit),
+      page: Number(page),
+      sort,
+      query
+    });
+    res.json(result);
   } catch (error) {
     res.status(500).json({ status: 'error', message: error.message });
   }
@@ -17,13 +23,11 @@ router.get('/', async (req, res) => {
 // GET /api/products/:pid - Obtener producto por id
 router.get('/:pid', async (req, res) => {
   try {
-    const pid = parseInt(req.params.pid);
-    if (isNaN(pid)) return res.status(400).json({ status: 'error', message: 'ID inválido' });
-
-    const product = await productManager.getProductById(pid);
+    const product = await productManager.getProductById(req.params.pid);
     res.json({ status: 'success', data: product });
   } catch (error) {
-    res.status(404).json({ status: 'error', message: error.message });
+    const status = error.message.includes('inválido') ? 400 : 404;
+    res.status(status).json({ status: 'error', message: error.message });
   }
 });
 
@@ -40,13 +44,10 @@ router.post('/', async (req, res) => {
 // PUT /api/products/:pid - Actualizar un producto
 router.put('/:pid', async (req, res) => {
   try {
-    const pid = parseInt(req.params.pid);
-    if (isNaN(pid)) return res.status(400).json({ status: 'error', message: 'ID inválido' });
-
-    const product = await productManager.updateProduct(pid, req.body);
+    const product = await productManager.updateProduct(req.params.pid, req.body);
     res.json({ status: 'success', data: product });
   } catch (error) {
-    const status = error.message.includes('no encontrado') ? 404 : 400;
+    const status = error.message.includes('inválido') ? 400 : error.message.includes('no encontrado') ? 404 : 400;
     res.status(status).json({ status: 'error', message: error.message });
   }
 });
@@ -54,13 +55,11 @@ router.put('/:pid', async (req, res) => {
 // DELETE /api/products/:pid - Eliminar un producto
 router.delete('/:pid', async (req, res) => {
   try {
-    const pid = parseInt(req.params.pid);
-    if (isNaN(pid)) return res.status(400).json({ status: 'error', message: 'ID inválido' });
-
-    const product = await productManager.deleteProduct(pid);
+    const product = await productManager.deleteProduct(req.params.pid);
     res.json({ status: 'success', message: 'Producto eliminado', data: product });
   } catch (error) {
-    res.status(404).json({ status: 'error', message: error.message });
+    const status = error.message.includes('inválido') ? 400 : 404;
+    res.status(status).json({ status: 'error', message: error.message });
   }
 });
 

@@ -1,0 +1,92 @@
+<div class="container">
+  <h1>Productos</h1>
+
+  <div class="cart-input">
+    <label for="cartId">Tu Cart ID:</label>
+    <input type="text" id="cartId" placeholder="Pegá tu cart ID acá" />
+  </div>
+
+  {{#if error}}
+    <p class="error">{{error}}</p>
+  {{/if}}
+
+  <table>
+    <thead>
+      <tr>
+        <th>Título</th>
+        <th>Categoría</th>
+        <th>Precio</th>
+        <th>Stock</th>
+        <th>Estado</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each payload}}
+      <tr>
+        <td>{{this.title}}</td>
+        <td>{{this.category}}</td>
+        <td>${{this.price}}</td>
+        <td>{{this.stock}}</td>
+        <td>{{#if this.status}}✅ Activo{{else}}❌ Inactivo{{/if}}</td>
+        <td>
+          <button onclick="addToCart('{{this._id}}')">Agregar al carrito</button>
+        </td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  <div class="pagination">
+    {{#if hasPrevPage}}
+      <a href="{{prevLink}}">← Anterior</a>
+    {{else}}
+      <span class="disabled">← Anterior</span>
+    {{/if}}
+
+    <span>Página {{page}} de {{totalPages}}</span>
+
+    {{#if hasNextPage}}
+      <a href="{{nextLink}}">Siguiente →</a>
+    {{else}}
+      <span class="disabled">Siguiente →</span>
+    {{/if}}
+  </div>
+</div>
+
+<style>
+  .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+  .cart-input { margin-bottom: 1rem; }
+  .cart-input input { padding: 0.4rem 0.8rem; width: 320px; border: 1px solid #ccc; border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 0.6rem 1rem; border: 1px solid #ddd; text-align: left; }
+  th { background-color: #f4f4f4; }
+  tr:hover { background-color: #f9f9f9; }
+  button { padding: 0.4rem 0.8rem; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer; }
+  button:hover { background: #555; }
+  .pagination { display: flex; align-items: center; gap: 1rem; margin-top: 1.5rem; }
+  .pagination a { padding: 0.4rem 0.8rem; background: #333; color: white; text-decoration: none; border-radius: 4px; }
+  .pagination .disabled { padding: 0.4rem 0.8rem; color: #aaa; }
+  .error { color: red; }
+</style>
+
+<script>
+  async function addToCart(productId) {
+    const cartId = document.getElementById('cartId').value.trim();
+    if (!cartId) {
+      alert('Primero ingresá tu Cart ID');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/carts/${cartId}/product/${productId}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.status === 'success') {
+        alert('Producto agregado al carrito ✅');
+      } else {
+        alert('Error: ' + data.message);
+      }
+    } catch (error) {
+      alert('Error al agregar el producto');
+    }
+  }
+</script>
