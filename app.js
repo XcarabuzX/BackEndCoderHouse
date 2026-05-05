@@ -4,11 +4,15 @@ import { Server } from 'socket.io';
 import { engine } from 'express-handlebars';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import cookieParser from 'cookie-parser';
+import passport from 'passport';
 import productsRouter from './src/routes/products.router.js';
 import cartsRouter from './src/routes/carts.router.js';
 import viewsRouter from './src/routes/views.router.js';
+import sessionsRouter from './src/routes/sessions.router.js';
 import { ProductManager } from './src/managers/ProductManager.js';
 import { connectDB } from './src/config/mongoose.config.js';
+import { initializePassport } from './src/config/passport.config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,10 +32,15 @@ app.engine('handlebars', engine({
 app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'src/views'));
 
-// Middleware para parsear JSON y formularios
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(cookieParser());
+
+// Passport
+initializePassport();
+app.use(passport.initialize());
 
 // Compartir io con los routers HTTP
 app.locals.io = io;
@@ -42,6 +51,7 @@ app.use('/', viewsRouter);
 // Rutas de la API REST
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
+app.use('/api/sessions', sessionsRouter);
 
 // Manejo de errores global
 app.use((err, req, res, next) => {
