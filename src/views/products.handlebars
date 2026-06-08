@@ -30,7 +30,7 @@
         <td>{{this.stock}}</td>
         <td>{{#if this.status}}✅ Activo{{else}}❌ Inactivo{{/if}}</td>
         <td>
-          <button onclick="addToCart('{{this._id}}')">Agregar al carrito</button>
+          <button onclick="addToCart('{{this.id}}')">Agregar al carrito</button>
         </td>
       </tr>
       {{/each}}

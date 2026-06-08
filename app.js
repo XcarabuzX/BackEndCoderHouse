@@ -10,9 +10,10 @@ import productsRouter from './src/routes/products.router.js';
 import cartsRouter from './src/routes/carts.router.js';
 import viewsRouter from './src/routes/views.router.js';
 import sessionsRouter from './src/routes/sessions.router.js';
-import { ProductManager } from './src/managers/ProductManager.js';
+import { productService } from './src/services/product.service.js';
 import { connectDB } from './src/config/mongoose.config.js';
 import { initializePassport } from './src/config/passport.config.js';
+import { config } from './src/config/config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,8 +21,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
-const productManager = new ProductManager();
-const PORT = 8080;
+const PORT = config.port;
 
 // Motor de plantillas Handlebars
 app.engine('handlebars', engine({
@@ -53,10 +53,11 @@ app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
 app.use('/api/sessions', sessionsRouter);
 
-// Manejo de errores global
+// Manejo de errores global. Respeta el statusCode de los AppError de negocio.
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ status: 'error', message: 'Error interno del servidor' });
+  const status = err.statusCode || 500;
+  if (status === 500) console.error(err.stack);
+  res.status(status).json({ status: 'error', message: err.message || 'Error interno del servidor' });
 });
 
 // Lógica WebSocket
@@ -65,8 +66,8 @@ io.on('connection', (socket) => {
 
   socket.on('newProduct', async (data) => {
     try {
-      await productManager.addProduct(data);
-      const result = await productManager.getProducts();
+      await productService.createProduct(data);
+      const result = await productService.getProducts();
       io.emit('updateProducts', result.payload);
     } catch (error) {
       socket.emit('productError', { message: error.message });
@@ -75,8 +76,8 @@ io.on('connection', (socket) => {
 
   socket.on('deleteProduct', async (id) => {
     try {
-      await productManager.deleteProduct(id);
-      const result = await productManager.getProducts();
+      await productService.deleteProduct(id);
+      const result = await productService.getProducts();
       io.emit('updateProducts', result.payload);
     } catch (error) {
       socket.emit('productError', { message: error.message });
