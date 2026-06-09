@@ -1,10 +1,9 @@
 import mongoose from 'mongoose';
-
-const MONGODB_URI = 'mongodb://127.0.0.1:27017/ecommerce?directConnection=true';
+import { config } from './config.js';
 
 export const connectDB = async () => {
   try {
-    await mongoose.connect(MONGODB_URI);
+    await mongoose.connect(config.mongoUri);
     console.log('MongoDB conectado');
   } catch (error) {
     console.error('Error conectando a MongoDB:', error.message);
